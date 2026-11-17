@@ -265,7 +265,8 @@ const DRINKS=[
   {n:'無糖綠茶',f:15,t:ICE2},{n:'蘋果汁',f:15,t:ICE2},{n:'柳橙汁',f:15,t:ICE2},{n:'可爾必思',f:15,t:ICE2},
   {n:'美祿',f:15,t:HOTCOLD},{n:'美式咖啡',f:15,t:HOTCOLD}
 ];
-const PARKING_OPTS=['汽車折抵券','機車折抵券','不需要'];
+function parkingStr(){const c=ST.parkCar||0,b=ST.parkBike||0;return(c||b)?[c?`汽車 ${c} 張`:'',b?`機車 ${b} 張`:''].filter(Boolean).join('、'):'不需要';}
+function adjPark(k,d){ST[k]=Math.max(0,Math.min(20,(ST[k]||0)+d));const e=$(k+'Val');if(e)e.textContent=ST[k];}
 const snackOf=n=>SNACKS.find(x=>x.n===n)||SNACKS[0];
 const drinkOf=n=>DRINKS.find(x=>x.n===n)||DRINKS[0];
 function ensureMealChoices(){
@@ -310,7 +311,7 @@ const TAKEN_STATIC=['1排W1','1排W2'];  // 輪椅座，不開放
 const STEPS=['身份驗證','報名資料','費用確認','付款','選位','電子票'];
 
 /* ══ STATE ══ */
-let ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parking:''};
+let ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parkCar:0,parkBike:0};
 
 /* ══ STORAGE ══ */
 // ── Local backup (always used as fallback) ──
@@ -580,7 +581,7 @@ function step1(){
     ${ST.email?'<div style="font-size:11px;color:var(--green);margin-top:5px">✓ Email 已自動帶入，可視需要修改</div>':''}
   </div>
   <div class="fg">
-    <label>攜眷人數&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">每位眷屬 NT$220，限攜 3 名</span></label>
+    <label>攜眷人數&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">每位眷屬 NT$220</span></label>
     <div class="counter">
       <button class="cbtn" onclick="adjComp(-1)">−</button>
       <span class="cval" id="compVal">${ST.companions}</span>
@@ -599,11 +600,14 @@ function step1(){
     <div id="mealChoices">${mealChoicesHtml()}</div>
   </div>
   <div class="fg">
-    <label>停車折抵券&ensp;<span style="font-size:10px;color:var(--red);text-transform:none;letter-spacing:0">必選 · 影城需於放映前 4 天備券</span></label>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
-      ${PARKING_OPTS.map(o=>`<label style="display:flex;align-items:center;gap:5px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer"><input type="radio" name="parkOpt" value="${o}" ${ST.parking===o?'checked':''} onchange="ST.parking=this.value" style="width:auto"/>${o}</label>`).join('')}
+    <label>停車折抵券&ensp;<span style="font-size:10px;color:var(--red);text-transform:none;letter-spacing:0">影城需於放映前 4 天備券 · 不需要請維持 0</span></label>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:6px">
+      <div><div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">🚗 汽車折抵券</div>
+        <div class="counter"><button class="cbtn" onclick="adjPark('parkCar',-1)">−</button><span class="cval" id="parkCarVal">${ST.parkCar||0}</span><button class="cbtn" onclick="adjPark('parkCar',1)">+</button><span style="font-size:12px;color:var(--text-dim);margin-left:6px">張</span></div></div>
+      <div><div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">🛵 機車折抵券</div>
+        <div class="counter"><button class="cbtn" onclick="adjPark('parkBike',-1)">−</button><span class="cval" id="parkBikeVal">${ST.parkBike||0}</span><button class="cbtn" onclick="adjPark('parkBike',1)">+</button><span style="font-size:12px;color:var(--text-dim);margin-left:6px">張</span></div></div>
     </div>
-    <div style="font-size:11px;color:var(--text-dim);margin-top:5px">憑票根汽車／機車各免費停 3 小時，請依實際交通方式選擇。</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:5px">憑票根汽車／機車各免費停 3 小時，請依實際需要的車輛數填寫（例：全家 6 人開 2 輛車 → 汽車 2 張）。</div>
   </div>
   <div id="s1msg"></div>
   <div class="btn-row">
@@ -615,10 +619,9 @@ function step1(){
 function doStep1(){
   const emailEl=$('iEmail');if(emailEl)ST.email=emailEl.value.trim();
   if(!ST.email||!ST.email.includes('@')||!ST.email.includes('.')){$('s1msg').innerHTML='<div class="alert alert-err">請填寫正確的 Email 地址。</div>';return;}
-  if(!ST.parking){$('s1msg').innerHTML='<div class="alert alert-err">請選擇停車折抵券（不需要請選「不需要」）。</div>';return;}
   goStep(2);
 }
-function adjComp(d){ST.companions=Math.max(0,Math.min(3,ST.companions+d));const v=$('compVal');if(v)v.textContent=ST.companions;}
+function adjComp(d){ST.companions=Math.max(0,Math.min(20,ST.companions+d));const v=$('compVal');if(v)v.textContent=ST.companions;}
 function adjMeal(d){ST.meals=Math.max(0,Math.min(20,ST.meals+d));const m=$('mealVal');if(m)m.textContent=ST.meals;renderMealChoices();}
 
 /* ── STEP 2 ── */
@@ -630,7 +633,7 @@ function step2(){
     <tr><td>${ST.employee.name}（${ST.employee.type==='社員'?'社員':ST.employee.company+' 同仁'}）</td><td>NT$ ${base}</td></tr>
     ${ST.companions>0?`<tr><td>眷屬 × ${ST.companions} 名</td><td>NT$ ${comp}</td></tr>`:''}
     ${ST.meals>0?`<tr><td>餐點套餐 × ${ST.meals} 份${mealUpgrade()?'（含升級 $'+mealUpgrade()+'）':''}</td><td>NT$ ${meal}</td></tr><tr><td colspan="2" style="font-size:11px;color:var(--text-dim);line-height:1.8">${mealChoiceStr().split('；').join('<br>')}</td></tr>`:''}
-    <tr><td>停車折抵券</td><td>${ST.parking||'—'}</td></tr>
+    <tr><td>停車折抵券</td><td>${parkingStr()}</td></tr>
     <tr class="ptotal"><td>💰 應付合計</td><td>NT$ ${total}</td></tr>
   </table>
   <div style="margin-top:12px;padding:12px 14px;background:var(--dark-3);border:1px solid var(--dark-4);font-size:12px;color:var(--text-dim);line-height:2.2;letter-spacing:.5px">
@@ -822,7 +825,7 @@ async function doSeatNext(){
   const{total}=calcTotal();
   const booking={
     id:ST.employee.id,name:ST.employee.name,type:ST.employee.type,company:ST.employee.company||'',email:ST.email,
-    companions:ST.companions,meals:ST.meals,mealChoice:ST.meals>0?mealChoiceStr():'',parking:ST.parking,seats:ST.selectedSeats,
+    companions:ST.companions,meals:ST.meals,mealChoice:ST.meals>0?mealChoiceStr():'',parking:parkingStr(),seats:ST.selectedSeats,
     total,ticketId:ST.ticketId,time:new Date().toLocaleString('zh-TW'),
     payStatus:'待確認',payDate:ST.payDate,payAmount:ST.payAmount,payLast5:ST.payLast5,
   };
@@ -878,7 +881,7 @@ function step5(){
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">座位</td><td style="padding:7px 0;font-weight:600;color:var(--primary);letter-spacing:1px">${ST.selectedSeats.join('、')}</td></tr>
       ${ST.companions>0?`<tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">攜眷</td><td style="padding:7px 0">${ST.companions} 名</td></tr>`:''}
       ${ST.meals>0?`<tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">餐點</td><td style="padding:7px 0">× ${ST.meals} 份<br><span style="font-size:11px;color:var(--text-dim)">${mealChoiceStr().split('；').join('<br>')}</span></td></tr>`:''}
-      <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">停車券</td><td style="padding:7px 0">${ST.parking||'—'}</td></tr>
+      <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">停車券</td><td style="padding:7px 0">${parkingStr()}</td></tr>
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">合計</td><td style="padding:7px 0;font-weight:700;color:var(--primary)">NT$ ${total}</td></tr>
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">票券編號</td><td style="padding:7px 0;font-size:11px;font-family:monospace">${ST.ticketId}</td></tr>
       <tr><td style="padding:7px 0;color:var(--text-dim)">Email</td><td style="padding:7px 0;font-size:12px">${ST.email}</td></tr>
@@ -906,7 +909,7 @@ async function sendEmail(){
     const isReseat=ST.mode==='reseat';
     const sub=encodeURIComponent(`【漢民科技新竹登山社】重返巔峰北壁電影 ${isReseat?'座位變更確認':'報名完成通知'}`);
     const compLine=ST.companions>0?`\n攜眷：${ST.companions} 名`:'';
-    const mealLine=(ST.meals>0?`\n餐點套餐：× ${ST.meals} 份\n　${mealChoiceStr().split('；').join('\n　')}`:'')+`\n停車折抵券：${ST.parking||'—'}`;
+    const mealLine=(ST.meals>0?`\n餐點套餐：× ${ST.meals} 份\n　${mealChoiceStr().split('；').join('\n　')}`:'')+`\n停車折抵券：${parkingStr()}`;
     const body=encodeURIComponent(
 `${ST.employee.name} 您好，
 
@@ -1154,10 +1157,10 @@ function exportMeals(){
     const nm=b['姓名']||b.name||'',id=b['工號']||b.id||'',st=String(b['座位']||b.seats||'');
     const ml=b['餐點份數']||b.meals||0,mc=String(b['餐點選擇']||b.mealChoice||''),pk=b['停車券']||b.parking||'';
     csv+=`${i+1},${nm},${id},${st},${ml},"${mc}",${pk}\n`;
-    if(pk)park[pk]=(park[pk]||0)+1;
+    (String(pk).match(/(汽車|機車) (\d+) 張/g)||[]).forEach(m=>{const q=m.match(/(汽車|機車) (\d+)/);park[q[1]+'折抵券']=(park[q[1]+'折抵券']||0)+parseInt(q[2]);});
     mc.split('；').filter(Boolean).forEach(it=>{it.replace(/^\d+\./,'').split('｜').forEach(x=>{tally[x]=(tally[x]||0)+1;});});
   });
-  csv+='\n【停車券統計】\n';Object.keys(park).forEach(k=>{csv+=`${k},${park[k]}\n`;});
+  csv+='\n【停車券張數統計】\n';Object.keys(park).forEach(k=>{csv+=`${k},${park[k]}\n`;});
   csv+='\n【餐點品項統計】\n';Object.keys(tally).sort().forEach(k=>{csv+=`"${k}",${tally[k]}\n`;});
   dl('\ufeff'+csv,'重返巔峰北壁_備貨清單.csv','text/csv;charset=utf-8');
 }
@@ -1512,7 +1515,7 @@ ${CFG.org}`);
 
 /* ══ NAV ══ */
 function goStep(n){ST.step=n;render();window.scrollTo({top:0,behavior:'smooth'});}
-function resetAll(){clearTakenCache();ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parking:''};render();}
+function resetAll(){clearTakenCache();ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parkCar:0,parkBike:0};render();}
 
 /* ══ INIT ══ */
 // 頁面載入時先從 Sheets 抓社員名單，再 render
