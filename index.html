@@ -550,16 +550,16 @@ async function confirmNonMember(){
   const id=window._pendingId||'';
   const compSel=($('iCompany')||{value:''}).value;
   const compOther=($('iOtherCompany')||{value:''}).value.trim();
-  const company=compSel==='other'?compOther:compSel;
+  const company=compSel==='other_hmt'?compOther:compSel;
   const email=($('iEmailNM')||{value:''}).value.trim();
   const msg=$('v0msg2');
   if(!company){msg.innerHTML='<div class="alert alert-err">請選擇或填寫公司別。</div>';return;}
-  if(compSel==='other'&&!compOther){msg.innerHTML='<div class="alert alert-err">請填寫公司別名稱。</div>';return;}
+  if(compSel==='other_hmt'&&!compOther){msg.innerHTML='<div class="alert alert-err">請填寫公司別名稱。</div>';return;}
   if(!email||!email.includes('@')){msg.innerHTML='<div class="alert alert-err">請填寫正確的 Email。</div>';return;}
   msg.innerHTML='<div class="alert alert-info">⏳ 驗證中...</div>';
   const reg=await isRegistered(id);
   if(reg){msg.innerHTML='<div class="alert alert-err">⚠ 此工號已完成報名。若需修改座位，請選「已報名，修改座位」。</div>';return;}
-  ST.employee={name,id,type:memberType||'同仁',company,email};
+  ST.employee={name,id,type:compSel==='other_ext'?'其他或眷屬':'同仁',company,email};
   ST.email=email;
   msg.innerHTML='';goStep(1);
 }
