@@ -323,7 +323,8 @@ async function apiCall(action,params={}){
   // 自動移除 URL 中多餘的 query string（例如誤存了 ?action=ping）
   const baseUrl=CFG.apiUrl.split('?')[0];
   const qs=new URLSearchParams({action,...params}).toString();
-  const res=await fetch(`${baseUrl}?${qs}`,{redirect:'follow'});
+  const ctl=new AbortController();const tmo=setTimeout(()=>ctl.abort(),15000);
+  let res;try{res=await fetch(`${baseUrl}?${qs}`,{redirect:'follow',signal:ctl.signal});}finally{clearTimeout(tmo);}
   if(!res.ok)throw new Error('HTTP '+res.status);
   const data=await res.json();
   if(!data.ok)throw new Error(data.error||'API error');
