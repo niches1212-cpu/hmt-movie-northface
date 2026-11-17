@@ -254,31 +254,43 @@ const HMT_COMPANIES=['HE','HH','HTSI','AIBT','ASC','HTX','HPC','SA'];
 const PRICE_MEAL=90;
 const PRICE_COMPANION=220;
 
-/* ══ 套餐選擇：小爆米花 + 中杯飲料 ══ */
-const MEAL_POP=['焦糖','鹹味','綜合'];
-const MEAL_DRINK=['可樂','可樂 Zero','雪碧','芬達','檸檬紅茶'];
-const MEAL_ICE=['冰','去冰'];
+/* ══ 套餐選擇：小食 + 中杯飲料（可加價換品項）══ */
+const SNACKS=[
+  {n:'焦糖爆米花',f:0},{n:'鹹味爆米花',f:0},{n:'綜合爆米花',f:0},
+  {n:'熱狗堡(番茄醬)',f:30},{n:'熱狗堡(芥末醬)',f:30},{n:'熱狗堡(雙醬)',f:30},{n:'吉拿棒(肉桂粉)',f:30}
+];
+const ICE2=['冰','去冰'],HOTCOLD=['冷','熱'];
+const DRINKS=[
+  {n:'可樂',f:0,t:ICE2},{n:'可樂 Zero',f:0,t:ICE2},{n:'雪碧',f:0,t:ICE2},{n:'芬達',f:0,t:ICE2},{n:'檸檬紅茶',f:0,t:ICE2},
+  {n:'無糖綠茶',f:15,t:ICE2},{n:'蘋果汁',f:15,t:ICE2},{n:'柳橙汁',f:15,t:ICE2},{n:'可爾必思',f:15,t:ICE2},
+  {n:'美祿',f:15,t:HOTCOLD},{n:'美式咖啡',f:15,t:HOTCOLD}
+];
+const PARKING_OPTS=['汽車折抵券','機車折抵券','不需要'];
+const snackOf=n=>SNACKS.find(x=>x.n===n)||SNACKS[0];
+const drinkOf=n=>DRINKS.find(x=>x.n===n)||DRINKS[0];
 function ensureMealChoices(){
-  while(ST.mealChoices.length<ST.meals)ST.mealChoices.push({pop:MEAL_POP[0],drink:MEAL_DRINK[0],ice:MEAL_ICE[0]});
+  while(ST.mealChoices.length<ST.meals)ST.mealChoices.push({snack:SNACKS[0].n,drink:DRINKS[0].n,temp:DRINKS[0].t[0]});
   ST.mealChoices.length=ST.meals;
+  ST.mealChoices.forEach(m=>{const d=drinkOf(m.drink);if(!d.t.includes(m.temp))m.temp=d.t[0];});
 }
-function mealChoiceStr(){return '';
+function mealUpgrade(){ensureMealChoices();return ST.mealChoices.reduce((a,m)=>a+snackOf(m.snack).f+drinkOf(m.drink).f,0);}
+function mealChoiceStr(){
   ensureMealChoices();
-  return ST.mealChoices.map((m,i)=>`${i+1}.${m.pop}爆米花+${m.drink}(${m.ice})`).join('；');
+  return ST.mealChoices.map((m,i)=>{const sn=snackOf(m.snack),dr=drinkOf(m.drink);
+    return `${i+1}.${sn.n}${sn.f?'[加$'+sn.f+']':''}｜${dr.n}(${m.temp})${dr.f?'[加$'+dr.f+']':''}`;}).join('；');
 }
-function mealOpts(list,sel){return list.map(x=>`<option value="${x}"${x===sel?' selected':''}>${x}</option>`).join('');}
 function mealChoicesHtml(){
   ensureMealChoices();
-  return ST.mealChoices.map((m,i)=>`<div class="meal-card">
+  return ST.mealChoices.map((m,i)=>{const dr=drinkOf(m.drink);return `<div class="meal-card">
     <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:6px">🍿 第 ${i+1} 份套餐</div>
     <div class="meal-row">
-      <label>小爆米花<select onchange="setMeal(${i},'pop',this.value)">${mealOpts(MEAL_POP,m.pop)}</select></label>
-      <label>中杯飲料<select onchange="setMeal(${i},'drink',this.value)">${mealOpts(MEAL_DRINK,m.drink)}</select></label>
-      <label>冰量<select onchange="setMeal(${i},'ice',this.value)">${mealOpts(MEAL_ICE,m.ice)}</select></label>
-    </div></div>`).join('');
+      <label>小食<select onchange="setMeal(${i},'snack',this.value)">${SNACKS.map(x=>`<option value="${x.n}"${x.n===m.snack?' selected':''}>${x.n}${x.f?'（+$'+x.f+'）':''}</option>`).join('')}</select></label>
+      <label>中杯飲料<select onchange="setMeal(${i},'drink',this.value)">${DRINKS.map(x=>`<option value="${x.n}"${x.n===m.drink?' selected':''}>${x.n}${x.f?'（+$'+x.f+'）':''}</option>`).join('')}</select></label>
+      <label>${dr.t===HOTCOLD?'冷熱':'冰量'}<select onchange="setMeal(${i},'temp',this.value)">${dr.t.map(x=>`<option value="${x}"${x===m.temp?' selected':''}>${x}</option>`).join('')}</select></label>
+    </div></div>`;}).join('');
 }
 function renderMealChoices(){const el=$('mealChoices');if(el)el.innerHTML=mealChoicesHtml();}
-function setMeal(i,k,v){if(ST.mealChoices[i])ST.mealChoices[i][k]=v;}
+function setMeal(i,k,v){if(ST.mealChoices[i]){ST.mealChoices[i][k]=v;if(k==='drink')ensureMealChoices();renderMealChoices();}}
 
 function getBasePrice(type,company){
   if(type==='社員')return 100;
@@ -298,7 +310,7 @@ const TAKEN_STATIC=['1排W1','1排W2'];  // 輪椅座，不開放
 const STEPS=['身份驗證','報名資料','費用確認','付款','選位','電子票'];
 
 /* ══ STATE ══ */
-let ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[]};
+let ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parking:''};
 
 /* ══ STORAGE ══ */
 // ── Local backup (always used as fallback) ──
@@ -361,7 +373,7 @@ function clearTakenCache(){_takenCache=null;}
 
 /* ══ UTILS ══ */
 const $=id=>document.getElementById(id);
-function calcTotal(){const base=getBasePrice(ST.employee.type,ST.employee.company||'');const comp=ST.companions*PRICE_COMPANION;const meal=ST.meals*PRICE_MEAL;return{base,comp,meal,total:base+comp+meal};}
+function calcTotal(){const base=getBasePrice(ST.employee.type,ST.employee.company||'');const comp=ST.companions*PRICE_COMPANION;const meal=ST.meals*PRICE_MEAL+mealUpgrade();return{base,comp,meal,total:base+comp+meal};}
 function genTicketId(){return'HMT-'+ST.employee.id+'-'+Date.now().toString(36).toUpperCase().slice(-5);}
 function toast(msg,dur=3000){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 
@@ -576,14 +588,21 @@ function step1(){
     </div>
   </div>
   <div class="fg">
-    <label>套餐加購&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">小爆米花＋中杯飲料，NT$90/份</span></label>
+    <label>套餐加購&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">小食＋中杯飲料，NT$90/份（換熱狗堡/吉拿棒 +$30、特調飲料 +$15）</span></label>
     <div class="counter">
       <button class="cbtn" onclick="adjMeal(-1)">−</button>
       <span class="cval" id="mealVal">${ST.meals}</span>
       <button class="cbtn" onclick="adjMeal(1)">+</button>
       <span style="font-size:12px;color:var(--text-dim);margin-left:6px">份</span>
     </div>
-    
+    <div id="mealChoices">${mealChoicesHtml()}</div>
+  </div>
+  <div class="fg">
+    <label>停車折抵券&ensp;<span style="font-size:10px;color:var(--red);text-transform:none;letter-spacing:0">必選 · 影城需於放映前 4 天備券</span></label>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+      ${PARKING_OPTS.map(o=>`<label style="display:flex;align-items:center;gap:5px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer"><input type="radio" name="parkOpt" value="${o}" ${ST.parking===o?'checked':''} onchange="ST.parking=this.value" style="width:auto"/>${o}</label>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:5px">憑票根汽車／機車各免費停 3 小時，請依實際交通方式選擇。</div>
   </div>
   <div id="s1msg"></div>
   <div class="btn-row">
@@ -595,10 +614,11 @@ function step1(){
 function doStep1(){
   const emailEl=$('iEmail');if(emailEl)ST.email=emailEl.value.trim();
   if(!ST.email||!ST.email.includes('@')||!ST.email.includes('.')){$('s1msg').innerHTML='<div class="alert alert-err">請填寫正確的 Email 地址。</div>';return;}
+  if(!ST.parking){$('s1msg').innerHTML='<div class="alert alert-err">請選擇停車折抵券（不需要請選「不需要」）。</div>';return;}
   goStep(2);
 }
 function adjComp(d){ST.companions=Math.max(0,Math.min(3,ST.companions+d));const v=$('compVal');if(v)v.textContent=ST.companions;}
-function adjMeal(d){ST.meals=Math.max(0,Math.min(20,ST.meals+d));const m=$('mealVal');if(m)m.textContent=ST.meals;}
+function adjMeal(d){ST.meals=Math.max(0,Math.min(20,ST.meals+d));const m=$('mealVal');if(m)m.textContent=ST.meals;renderMealChoices();}
 
 /* ── STEP 2 ── */
 function step2(){
@@ -608,7 +628,8 @@ function step2(){
   <table class="ptable">
     <tr><td>${ST.employee.name}（${ST.employee.type==='社員'?'社員':ST.employee.company+' 同仁'}）</td><td>NT$ ${base}</td></tr>
     ${ST.companions>0?`<tr><td>眷屬 × ${ST.companions} 名</td><td>NT$ ${comp}</td></tr>`:''}
-    ${ST.meals>0?`<tr><td>餐點套餐 × ${ST.meals} 份</td><td>NT$ ${meal}</td></tr>`:''}
+    ${ST.meals>0?`<tr><td>餐點套餐 × ${ST.meals} 份${mealUpgrade()?'（含升級 $'+mealUpgrade()+'）':''}</td><td>NT$ ${meal}</td></tr><tr><td colspan="2" style="font-size:11px;color:var(--text-dim);line-height:1.8">${mealChoiceStr().split('；').join('<br>')}</td></tr>`:''}
+    <tr><td>停車折抵券</td><td>${ST.parking||'—'}</td></tr>
     <tr class="ptotal"><td>💰 應付合計</td><td>NT$ ${total}</td></tr>
   </table>
   <div style="margin-top:12px;padding:12px 14px;background:var(--dark-3);border:1px solid var(--dark-4);font-size:12px;color:var(--text-dim);line-height:2.2;letter-spacing:.5px">
@@ -800,7 +821,7 @@ async function doSeatNext(){
   const{total}=calcTotal();
   const booking={
     id:ST.employee.id,name:ST.employee.name,type:ST.employee.type,company:ST.employee.company||'',email:ST.email,
-    companions:ST.companions,meals:ST.meals,seats:ST.selectedSeats,
+    companions:ST.companions,meals:ST.meals,mealChoice:ST.meals>0?mealChoiceStr():'',parking:ST.parking,seats:ST.selectedSeats,
     total,ticketId:ST.ticketId,time:new Date().toLocaleString('zh-TW'),
     payStatus:'待確認',payDate:ST.payDate,payAmount:ST.payAmount,payLast5:ST.payLast5,
   };
@@ -855,7 +876,8 @@ function step5(){
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">身份</td><td style="padding:7px 0">${ST.employee.type==='社員'?'⭐ 社員':ST.employee.company+'，'+( HMT_COMPANIES.includes(ST.employee.company)?'集團福委同仁':'其他同仁')}</td></tr>
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">座位</td><td style="padding:7px 0;font-weight:600;color:var(--primary);letter-spacing:1px">${ST.selectedSeats.join('、')}</td></tr>
       ${ST.companions>0?`<tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">攜眷</td><td style="padding:7px 0">${ST.companions} 名</td></tr>`:''}
-      ${ST.meals>0?`<tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">餐點</td><td style="padding:7px 0">× ${ST.meals} 份</td></tr>`:''}
+      ${ST.meals>0?`<tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">餐點</td><td style="padding:7px 0">× ${ST.meals} 份<br><span style="font-size:11px;color:var(--text-dim)">${mealChoiceStr().split('；').join('<br>')}</span></td></tr>`:''}
+      <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">停車券</td><td style="padding:7px 0">${ST.parking||'—'}</td></tr>
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">合計</td><td style="padding:7px 0;font-weight:700;color:var(--primary)">NT$ ${total}</td></tr>
       <tr style="border-bottom:1px solid var(--bg-5)"><td style="padding:7px 0;color:var(--text-dim)">票券編號</td><td style="padding:7px 0;font-size:11px;font-family:monospace">${ST.ticketId}</td></tr>
       <tr><td style="padding:7px 0;color:var(--text-dim)">Email</td><td style="padding:7px 0;font-size:12px">${ST.email}</td></tr>
@@ -883,7 +905,7 @@ async function sendEmail(){
     const isReseat=ST.mode==='reseat';
     const sub=encodeURIComponent(`【漢民科技新竹登山社】重返巔峰北壁電影 ${isReseat?'座位變更確認':'報名完成通知'}`);
     const compLine=ST.companions>0?`\n攜眷：${ST.companions} 名`:'';
-    const mealLine=ST.meals>0?`\n餐點套餐：× ${ST.meals} 份`:'';
+    const mealLine=(ST.meals>0?`\n餐點套餐：× ${ST.meals} 份\n　${mealChoiceStr().split('；').join('\n　')}`:'')+`\n停車折抵券：${ST.parking||'—'}`;
     const body=encodeURIComponent(
 `${ST.employee.name} 您好，
 
@@ -1025,7 +1047,7 @@ async function renderAdmin(){
   </div>
   <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <button class="btn btn-primary btn-sm" onclick="exportCSV()">📥 訂票清單 CSV</button>
-    <button class="btn btn-ghost btn-sm" onclick="exportMeals()">🍿 爆米花券名單</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportMeals()">🍿 備貨清單（餐點＋停車券）</button>
     <button class="btn btn-ghost btn-sm" onclick="batchEmailLinks()">📧 批次寄票連結</button>
     <button class="btn btn-primary btn-sm" onclick="batchSendTickets()" style="background:var(--green)">🎟 批次寄電子票（開演前三天用）</button>
     <button class="btn btn-ghost btn-sm" onclick="toggleAdminSeatMap()" id="seatMapToggleBtn">🪑 座位配置圖</button>
@@ -1099,7 +1121,7 @@ function bField(b,cn,en){return b[cn]||b[en]||'';}
 
 function exportCSV(){
   const bs=getAdminData();if(bs.length===0){alert('無報名資料，請先開啟管理後台載入資料。');return;}
-  let csv='序號,公司別,員工編號,姓名,身份,Email,座位,攜眷人數,餐點份數,合計金額,匯款日期,匯款金額,帳號後五碼,票券編號,付款狀態,報名時間,餐點選擇\n';
+  let csv='序號,公司別,員工編號,姓名,身份,Email,座位,攜眷人數,餐點份數,合計金額,匯款日期,匯款金額,帳號後五碼,票券編號,付款狀態,報名時間,餐點選擇,停車券\n';
   bs.forEach((b,i)=>{
     const co=b['公司']||b.company||'';
     const id=b['工號']||b.id||'';
@@ -1116,23 +1138,27 @@ function exportCSV(){
     const tk=b['票券編號']||b.ticketId||'';
     const ps=b['付款狀態']||b.payStatus||'待確認';
     const tm=b['報名時間']||b.time||'';
-    csv+=`${i+1},${co},${id},${nm},${tp},${em},${st},${cp},${ml},${tt},${pd},${pa},${p5},${tk},${ps},"${tm}","${b['餐點選擇']||b.mealChoice||''}"
+    csv+=`${i+1},${co},${id},${nm},${tp},${em},${st},${cp},${ml},${tt},${pd},${pa},${p5},${tk},${ps},"${tm}","${b['餐點選擇']||b.mealChoice||''}",${b['停車券']||b.parking||''}
 `;
   });
   dl('\ufeff'+csv,'重返巔峰北壁_訂票清單.csv','text/csv;charset=utf-8');
 }
 
 function exportMeals(){
-  const bs=getAdminData().filter(b=>parseInt(b['餐點份數']||b.meals||0)>0);if(bs.length===0){alert('無訂購餐點的紀錄。');return;}
-  let csv='序號,姓名,員工編號,座位,餐點份數,餐點選擇\n';
+  const bs=getAdminData().filter(b=>parseInt(b['餐點份數']||b.meals||0)>0||(b['停車券']||b.parking));
+  if(bs.length===0){alert('無備貨資料。');return;}
+  let csv='序號,姓名,員工編號,座位,餐點份數,餐點選擇,停車券\n';
+  const tally={},park={};
   bs.forEach((b,i)=>{
-    const nm=b['姓名']||b.name||'';
-    const id=b['工號']||b.id||'';
-    const st=String(b['座位']||b.seats||'');
-    const ml=b['餐點份數']||b.meals||0;
-    csv+=`${i+1},${nm},${id},${st},${ml},"${b['餐點選擇']||b.mealChoice||''}"\n`;
+    const nm=b['姓名']||b.name||'',id=b['工號']||b.id||'',st=String(b['座位']||b.seats||'');
+    const ml=b['餐點份數']||b.meals||0,mc=String(b['餐點選擇']||b.mealChoice||''),pk=b['停車券']||b.parking||'';
+    csv+=`${i+1},${nm},${id},${st},${ml},"${mc}",${pk}\n`;
+    if(pk)park[pk]=(park[pk]||0)+1;
+    mc.split('；').filter(Boolean).forEach(it=>{it.replace(/^\d+\./,'').split('｜').forEach(x=>{tally[x]=(tally[x]||0)+1;});});
   });
-  dl('\ufeff'+csv,'重返巔峰北壁_套餐名單.csv','text/csv;charset=utf-8');
+  csv+='\n【停車券統計】\n';Object.keys(park).forEach(k=>{csv+=`${k},${park[k]}\n`;});
+  csv+='\n【餐點品項統計】\n';Object.keys(tally).sort().forEach(k=>{csv+=`"${k}",${tally[k]}\n`;});
+  dl('\ufeff'+csv,'重返巔峰北壁_備貨清單.csv','text/csv;charset=utf-8');
 }
 function batchEmailLinks(){
   const bs=getAdminData();if(bs.length===0){alert('無報名資料，請先開啟管理後台載入資料。');return;}
@@ -1436,7 +1462,7 @@ async function batchSendTickets(){
     const companions=parseInt(b['攜眷人數']||b.companions)||0;
     const meals=parseInt(b['餐點份數']||b.meals)||0;
     const compLine=companions>0?`\n攜眷：${companions} 名`:'';
-    const mealLine=meals>0?`\n餐點套餐：× ${meals} 份`:'';
+    const mc=String(b['餐點選擇']||b.mealChoice||'');const mealLine=(meals>0?`\n餐點套餐：× ${meals} 份${mc?'\n　'+mc.split('；').join('\n　'):''}`:'')+`\n停車折抵券：${b['停車券']||b.parking||'—'}`;
     const baseUrl=(CFG.ticketBaseUrl||'').replace(/\/+$/,'');
     const ticketParams=new URLSearchParams({
       id:ticket,name,type:b['身份']||b.type||'同仁',
@@ -1485,7 +1511,7 @@ ${CFG.org}`);
 
 /* ══ NAV ══ */
 function goStep(n){ST.step=n;render();window.scrollTo({top:0,behavior:'smooth'});}
-function resetAll(){clearTakenCache();ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[]};render();}
+function resetAll(){clearTakenCache();ST={step:0,mode:'new',employee:null,email:'',companions:0,meals:0,payDate:'',payAmount:'',payLast5:'',selectedSeats:[],needSeats:1,ticketId:null,bookingTime:'',reseatConfirmed:false,oldSeats:[],mealChoices:[],parking:''};render();}
 
 /* ══ INIT ══ */
 // 頁面載入時先從 Sheets 抓社員名單，再 render
