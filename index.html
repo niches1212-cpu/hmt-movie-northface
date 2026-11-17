@@ -249,7 +249,7 @@ const CFG={
 // 頁面載入時自動 fetch，此處為空陣列（fallback 用）
 let MEMBERS=[];
 let _membersLoaded=false;
-// 集團福委會公司別（票價 150 元）
+// 集團福委會公司別（票價 130 元）
 const HMT_COMPANIES=['HE','HH','HTSI','AIBT','ASC','HTX','HPC','SA'];
 const PRICE_MEAL=90;
 const PRICE_COMPANION=220;
@@ -282,9 +282,9 @@ function setMeal(i,k,v){if(ST.mealChoices[i])ST.mealChoices[i][k]=v;}
 
 function getBasePrice(type,company){
   if(type==='社員')return 100;
-  if(HMT_COMPANIES.includes(company))return 150;
-  if(company==='other_ext'||type==='其他或眷屬')return 250;
-  return 200; // 漢民集團其他同仁
+  if(HMT_COMPANIES.includes(company))return 130;
+  if(company==='other_ext'||type==='其他或眷屬')return 220;
+  return 170; // 漢民集團其他同仁
 }
 // ══ 座位配置：Broadway 4廳（依影城座位圖，畫面由左至右＝號碼大→小）══
 const rng=(a,b)=>{const r=[];for(let n=a;n>=b;n--)r.push(n);return r;};
@@ -400,9 +400,9 @@ function step0(){return`
 <div style="background:var(--primary-pale);border:1.5px solid var(--primary-mid);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center">
   <span style="font-size:11px;font-weight:700;color:var(--primary);letter-spacing:1px">票價：</span>
   <span style="font-size:12px;color:var(--text)">⭐ 社員 <strong style="color:var(--green)">$100</strong></span>
-  <span style="font-size:12px;color:var(--text)">🏢 漢民集團福委會同仁 <strong style="color:var(--primary)">$150</strong></span>
-  <span style="font-size:12px;color:var(--text)">🏢 漢民集團其他同仁 <strong style="color:var(--primary)">$200</strong></span>
-  <span style="font-size:12px;color:var(--text)">👨‍👩‍👧 其他 <strong>$250</strong></span>
+  <span style="font-size:12px;color:var(--text)">🏢 漢民集團福委會同仁 <strong style="color:var(--primary)">$130</strong></span>
+  <span style="font-size:12px;color:var(--text)">🏢 漢民集團其他同仁 <strong style="color:var(--primary)">$170</strong></span>
+  <span style="font-size:12px;color:var(--text)">👨‍👩‍👧 其他 <strong>$220</strong></span>
   <span style="font-size:12px;color:var(--text)">🍿 套餐 <strong>$90</strong></span>
   <span style="font-size:11px;color:var(--text-dim)">&nbsp;·&nbsp;HE·HH·HTSI·AIBT·ASC·HTX·HPC·SA為集團福委會公司</span>
 </div>
@@ -426,7 +426,7 @@ function step0(){return`
       <label>公司別</label>
       <select id="iCompany" onchange="onCompanyChange()">
         <option value="">── 請選擇 ──</option>
-        <optgroup label="🏢 漢民集團福委會公司（$150）">
+        <optgroup label="🏢 漢民集團福委會公司（$130）">
           <option value="HE">HE</option>
           <option value="HH">HH</option>
           <option value="HTSI">HTSI</option>
@@ -436,10 +436,10 @@ function step0(){return`
           <option value="HPC">HPC</option>
           <option value="SA">SA</option>
         </optgroup>
-        <optgroup label="🏢 漢民集團其他同仁（$200）">
+        <optgroup label="🏢 漢民集團其他同仁（$170）">
           <option value="other_hmt">漢民集團其他同仁（請填寫公司別）</option>
         </optgroup>
-        <optgroup label="👨‍👩‍👧 其他（$250）">
+        <optgroup label="👨‍👩‍👧 其他（$220）">
           <option value="other_ext">其他</option>
         </optgroup>
       </select>
@@ -554,7 +554,7 @@ async function confirmNonMember(){
 /* ── STEP 1 ── */
 function step1(){
   const pl=ST.employee.type==='社員'?`社員 (NT$100)`:
-    ST.employee.type==='其他或眷屬'?`其他 (NT$250)`:HMT_COMPANIES.includes(ST.employee.company)?`${ST.employee.company}，漢民集團福委會同仁 (NT$150)`:`${ST.employee.company}，漢民集團其他同仁 (NT$200)`;
+    ST.employee.type==='其他或眷屬'?`其他 (NT$220)`:HMT_COMPANIES.includes(ST.employee.company)?`${ST.employee.company}，漢民集團福委會同仁 (NT$130)`:`${ST.employee.company}，漢民集團其他同仁 (NT$170)`;
   return`<div class="card">
   <div class="card-title">報名資料填寫</div>
   <div class="alert alert-ok">✓ 身份驗證成功：<strong>${ST.employee.name}</strong>&ensp;<span class="id-badge">${ST.employee.type==='社員'?'⭐ 社員':HMT_COMPANIES.includes(ST.employee.company)?ST.employee.company+'，集團福委同仁':ST.employee.company+'，其他同仁'}</span></div>
@@ -576,7 +576,7 @@ function step1(){
     </div>
   </div>
   <div class="fg">
-    <label>套餐加購&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">小爆米花＋中杯飲料，NT$90/份（上限 ${1+ST.companions} 份）</span></label>
+    <label>套餐加購&ensp;<span style="font-size:11px;color:var(--text-dim);text-transform:none;letter-spacing:0">小爆米花＋中杯飲料，NT$90/份</span></label>
     <div class="counter">
       <button class="cbtn" onclick="adjMeal(-1)">−</button>
       <span class="cval" id="mealVal">${ST.meals}</span>
@@ -597,8 +597,8 @@ function doStep1(){
   if(!ST.email||!ST.email.includes('@')||!ST.email.includes('.')){$('s1msg').innerHTML='<div class="alert alert-err">請填寫正確的 Email 地址。</div>';return;}
   goStep(2);
 }
-function adjComp(d){ST.companions=Math.max(0,Math.min(3,ST.companions+d));const v=$('compVal');if(v)v.textContent=ST.companions;if(ST.meals>1+ST.companions){ST.meals=1+ST.companions;const m=$('mealVal');if(m)m.textContent=ST.meals;}}
-function adjMeal(d){ST.meals=Math.max(0,Math.min(1+ST.companions,ST.meals+d));const m=$('mealVal');if(m)m.textContent=ST.meals;}
+function adjComp(d){ST.companions=Math.max(0,Math.min(3,ST.companions+d));const v=$('compVal');if(v)v.textContent=ST.companions;}
+function adjMeal(d){ST.meals=Math.max(0,Math.min(20,ST.meals+d));const m=$('mealVal');if(m)m.textContent=ST.meals;}
 
 /* ── STEP 2 ── */
 function step2(){
