@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電子票券 · 重返巔峰北壁</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 50%,#0a1628 100%);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px 16px;font-family:'Noto Sans TC',sans-serif;
+}
+.ticket-wrap{
+  width:100%;max-width:480px;
+  filter:drop-shadow(0 20px 60px rgba(0,0,0,.6));
+}
+.ticket{
+  background:#fff;border-radius:16px;overflow:hidden;position:relative;
+}
+/* ── 上半票：藍底 ── */
+.ticket-top{
+  background:linear-gradient(135deg,#003A8C 0%,#1D56B8 60%,#2563EB 100%);
+  padding:30px 28px 36px;color:#fff;position:relative;overflow:hidden;
+}
+.ticket-top::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,0.05);
+}
+.ticket-top::after{
+  content:'';position:absolute;bottom:-60px;left:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.org-label{
+  font-size:10px;letter-spacing:3px;opacity:.8;text-transform:uppercase;
+  margin-bottom:14px;
+}
+.movie-title{
+  font-family:'Noto Serif TC',serif;font-size:38px;font-weight:700;
+  letter-spacing:6px;margin-bottom:6px;
+  text-shadow:0 2px 12px rgba(0,0,0,.2);
+}
+.movie-en{
+  font-size:11px;letter-spacing:4px;opacity:.6;margin-bottom:22px;
+}
+.info-row{
+  display:flex;gap:20px;flex-wrap:wrap;margin-bottom:8px;
+}
+.info-item{font-size:12px;opacity:.85;letter-spacing:.5px;}
+.info-item strong{display:block;font-size:14px;opacity:1;margin-top:3px;letter-spacing:.5px;}
+
+/* 座位 badge */
+.seat-badge{
+  display:inline-block;
+  background:rgba(255,255,255,0.18);
+  border:1.5px solid rgba(255,255,255,0.4);
+  border-radius:8px;padding:10px 20px;
+  margin-top:18px;
+  backdrop-filter:blur(4px);
+}
+.seat-label{font-size:10px;letter-spacing:2px;opacity:.7;margin-bottom:4px;}
+.seat-num{
+  font-family:'Noto Serif TC',serif;font-size:20px;font-weight:700;
+  letter-spacing:4px;
+}
+
+/* ── 鋸齒分隔 ── */
+.perforation{
+  position:relative;height:28px;background:#fff;
+  display:flex;align-items:center;
+}
+.perf-line{
+  border-top:2.5px dashed #D1D5DB;width:100%;
+  margin-left:28px;margin-right:28px;
+}
+.perf-circle{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,#0a1628,#1a3a6b);
+  position:absolute;flex-shrink:0;top:50%;transform:translateY(-50%);
+}
+.perf-circle.left{left:-14px;}
+.perf-circle.right{right:-14px;}
+
+/* ── 下半票：白底 ── */
+.ticket-bottom{
+  padding:22px 28px 28px;
+}
+.holder-section{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+}
+.holder-info{flex:1;}
+.holder-label{font-size:10px;letter-spacing:2px;color:#9CA3AF;text-transform:uppercase;margin-bottom:6px;}
+.holder-name{font-size:20px;font-weight:700;color:#111827;letter-spacing:1px;}
+.holder-type{
+  display:inline-block;margin-top:6px;
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
+}
+.type-member{background:#DCFCE7;color:#166534;}
+.type-staff{background:#DBEAFE;color:#1E40AF;}
+.type-other{background:#F3F4F6;color:#374151;}
+
+
+
+/* 詳情 */
+.details{
+  margin-top:18px;padding-top:16px;
+  border-top:1px solid #F3F4F6;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.detail-item{}
+.detail-label{font-size:10px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.detail-val{font-size:13px;color:#374151;font-weight:500;}
+
+/* 票號 */
+.ticket-id-bar{
+  margin-top:18px;padding:10px 14px;
+  background:#F9FAFB;border-radius:8px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.ticket-id-label{font-size:10px;color:#9CA3AF;letter-spacing:1px;}
+.ticket-id-val{font-family:monospace;font-size:12px;color:#374151;letter-spacing:1px;}
+
+/* 警示 */
+.notice{
+  margin-top:12px;font-size:11px;color:#6B7280;
+  text-align:center;line-height:1.7;
+}
+
+/* 載入/錯誤 */
+.loading{text-align:center;padding:60px 20px;color:rgba(255,255,255,.7);}
+.error{text-align:center;padding:60px 20px;color:#FCA5A5;}
+.spinner{
+  width:36px;height:36px;border:3px solid rgba(255,255,255,.2);
+  border-top-color:rgba(255,255,255,.8);border-radius:50%;
+  animation:spin .8s linear infinite;margin:0 auto 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:400px){
+  .movie-title{font-size:30px;}
+  .seat-num{font-size:22px;}
+  .holder-name{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="ticket-wrap" id="app">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>載入票券中…</div>
+  </div>
+</div>
+
+<script>
+// ── QR Code 產生器（純 JS，不需外部 library）──
+// 使用 qrcode-generator lightweight implementation
+// 載入後再渲染
+
+// ── 票券資料（從 URL 參數取得）──
+function getParams(){
+  const p=new URLSearchParams(location.search);
+  return{
+    id:      p.get('id')||'',
+    name:    p.get('name')||'',
+    type:    p.get('type')||'同仁',
+    company: p.get('company')||'',
+    seats:   p.get('seats')||'',
+    companions: p.get('companions')||'0',
+    meals:   p.get('meals')||'0',
+    total:   p.get('total')||'0',
+    date:    p.get('date')||'2026 年 12 月 2 日（三）',
+    venue:   p.get('venue')||'竹北享平方百老匯 Broadway Cinemas 4廳',
+    time:    p.get('time')||'',
+  };
+}
+
+function typeClass(type){
+  if(type==='社員')return'type-member';
+  return type.includes('集團')||['HE','HH','HTSI','AIBT','ASC','HTX','HPC','SA'].includes(type)?'type-staff':'type-other';
+}
+function typeLabel(type,company){
+  if(type==='社員')return'⭐ 社員';
+  const hmt=['HE','HH','HTSI','AIBT','ASC','HTX','HPC','SA'];
+  return hmt.includes(company)?`${company} 集團福委同仁`:`${company} 同仁`;
+}
+
+function renderTicket(d){
+  const seatsArr=d.seats?d.seats.split(' ').filter(Boolean):[];
+  const seatDisplay=seatsArr.join('、')||'—';
+  const compInt=parseInt(d.companions)||0;
+  const mealInt=parseInt(d.meals)||0;
+
+  document.getElementById('app').innerHTML=`
+  <div class="ticket">
+    <!-- 上半 -->
+    <div class="ticket-top">
+      <div class="org-label">漢民科技新竹登山社 · 2026 社團活動</div>
+      <div class="movie-title">重返巔峰北壁</div>
+      <div class="movie-en">MOVIE EVENT</div>
+      <div class="info-row">
+        <div class="info-item">📍 地點<strong>${d.venue}</strong></div>
+        <div class="info-item">📅 日期<strong>${d.date}</strong></div>
+      </div>
+      <div class="info-row" style="margin-top:4px">
+        <div class="info-item">🕐 時間<strong>19:20 進場｜19:30 正片</strong></div>
+        <div class="info-item">🔚 散場<strong>約 21:00</strong></div>
+      </div>
+      <div class="seat-badge">
+        <div class="seat-label">YOUR SEAT</div>
+        <div class="seat-num">${seatDisplay}</div>
+      </div>
+    </div>
+
+    <!-- 鋸齒 -->
+    <div class="perforation">
+      <div class="perf-circle left"></div>
+      <div class="perf-line"></div>
+      <div class="perf-circle right"></div>
+    </div>
+
+    <!-- 下半 -->
+    <div class="ticket-bottom">
+      <div class="holder-section">
+        <div class="holder-info">
+          <div class="holder-label">Ticket Holder</div>
+          <div class="holder-name">${d.name}</div>
+          <div class="holder-type ${typeClass(d.type)}">${typeLabel(d.type,d.company)}</div>
+        </div>
+
+      </div>
+
+      <div class="details">
+        ${compInt>0?`<div class="detail-item"><div class="detail-label">攜眷人數</div><div class="detail-val">${compInt} 名</div></div>`:''}
+        ${mealInt>0?`<div class="detail-item"><div class="detail-label">餐點套餐</div><div class="detail-val">× ${mealInt} 份</div></div>`:''}
+        <div class="detail-item"><div class="detail-label">合計金額</div><div class="detail-val">NT$ ${d.total}</div></div>
+        <div class="detail-item"><div class="detail-label">人數</div><div class="detail-val">${1+compInt} 人</div></div>
+      </div>
+
+      <div class="ticket-id-bar">
+        <div class="ticket-id-label">Ticket ID</div>
+        <div class="ticket-id-val">${d.id}</div>
+      </div>
+
+      <div class="notice">
+        入場時請出示本票券及員工識別證<br>
+        報名後可換位，不能退票
+      </div>
+    </div>
+  </div>`;
+
+
+}
+
+
+function renderError(msg){
+  document.getElementById('app').innerHTML=`<div class="error"><div style="font-size:40px;margin-bottom:16px">⚠️</div><div>${msg}</div></div>`;
+}
+
+// ── 主流程 ──
+const p=getParams();
+if(!p.id||!p.name){
+  // Demo mode - 顯示示範票券
+  renderTicket({
+    id:'HMT-DEMO-00000',name:'王唯齡',type:'社員',company:'HE',
+    seats:'5排6號 5排5號',companions:'1',meals:'1',total:'450',
+    date:'2026 年 12 月 2 日（三）',venue:'竹北享平方百老匯 Broadway Cinemas 4廳',time:''
+  });
+}else{
+  renderTicket(p);
+}
+</script>
+</body>
+</html>
