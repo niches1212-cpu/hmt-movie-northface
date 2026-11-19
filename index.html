@@ -116,8 +116,11 @@ input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0
 .upload-preview{max-width:100%;max-height:150px;margin-top:12px;border-radius:6px;}
 
 /* ── SEAT MAP ── */
-.screen-bar{background:linear-gradient(to bottom,rgba(0,58,140,.3),transparent);height:5px;border-radius:2px;margin-bottom:30px;margin-top:20px;position:relative;}
-.screen-bar::after{content:'▶  SCREEN  ◀';position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:15px;letter-spacing:5px;color:var(--primary);font-weight:700;}
+.screen-wrap{position:relative;width:min(100%,370px);margin:14px auto 10px;}
+.screen-wrap svg{display:block;width:100%;height:auto;}
+.exit-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;color:#fff;background:#B91C1C;border-radius:3px;padding:2px 7px;}
+.exit-top{position:absolute;right:0;top:0;}
+.exit-bottom{text-align:right;margin:8px auto 0;width:min(100%,370px);}
 .smap-scroll{overflow-x:auto;padding:10px 0 4px;}
 .srow{display:flex;align-items:center;gap:4px;margin-bottom:5px;justify-content:center;}
 .srow-label{width:18px;font-size:10px;color:var(--text-dim);text-align:center;flex-shrink:0;font-weight:600;}
@@ -722,8 +725,9 @@ function step4(){
   </div>`:
   `<div class="alert alert-info" style="margin-bottom:8px">請選擇 <strong>${ST.needSeats}</strong> 個座位（本人${ST.companions>0?'+眷屬 '+ST.companions+' 名':''}）。</div>`}
 
-  <div class="screen-bar"></div>
+  <div class="screen-wrap"><span class="exit-tag exit-top">出入口 EXIT</span><svg viewBox="0 0 300 46" aria-label="銀幕"><path d="M10 22 Q150 -6 290 22" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" opacity=".85"/><text x="150" y="34" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="3" fill="var(--primary)">銀幕 Screen</text></svg></div>
   <div class="smap-scroll" id="seatMap"></div>
+  <div class="exit-bottom"><span class="exit-tag">出入口 EXIT ▲</span></div>
   <div class="legend">
     <div class="legend-i"><div class="legend-d" style="background:var(--bg-3);border-color:var(--bg-5)"></div>空位</div>
     <div class="legend-i"><div class="legend-d" style="background:var(--primary);border-color:var(--primary-light)"></div>您的選位</div>
@@ -1064,8 +1068,9 @@ async function renderAdmin(){
       <span style="font-size:11px;color:var(--text-dim);font-weight:400">點座位查看訂位者</span>
     </div>
     <div style="overflow-x:auto;padding:8px 0">
-      <div style="text-align:center;font-size:11px;letter-spacing:4px;color:var(--primary);font-weight:700;margin-bottom:10px">▶ SCREEN ◀</div>
+      <div class="screen-wrap"><span class="exit-tag exit-top">出入口 EXIT</span><svg viewBox="0 0 300 46" aria-label="銀幕"><path d="M10 22 Q150 -6 290 22" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" opacity=".85"/><text x="150" y="34" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="3" fill="var(--primary)">銀幕 Screen</text></svg></div>
       <div id="adminSeatGrid"></div>
+      <div class="exit-bottom"><span class="exit-tag">出入口 EXIT ▲</span></div>
     </div>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--text-dim)">
       <span>⬜ 空位</span>
